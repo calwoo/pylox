@@ -2,8 +2,8 @@ import os
 import sys
 import argparse
 
-
-had_error: bool = False
+from pylox.scanner import Scanner
+from pylox.error import *
 
 
 def main() -> None:
@@ -72,17 +72,6 @@ def run(script: str) -> None:
     # for now, just print tokens
     for token in tokens:
         print(token)
-
-
-# basic error handlers
-def error(line: int, message: str) -> None:
-    report(line, "", message)
-
-
-def report(line: int, where: str, message: str) -> None:
-    global had_error # ugh, globals!
-    print(f"[line {line}] Error {where}: {message}", file=sys.stderr)
-    had_error = True
 
 
 if __name__ == "__main__":

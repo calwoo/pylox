@@ -2,6 +2,10 @@ from pylox.token_type import TokenType
 
 
 class Token:
+    """
+    Container class for a token for parsing.
+    """
+
     def __init__(
         self,
         type: TokenType,
@@ -14,5 +18,5 @@ class Token:
         self.literal = literal
         self.line = line
 
-    def to_string(self) -> str:
+    def __str__(self) -> str:
         return f"{self.type} {self.lexeme} {self.literal}"

@@ -3,6 +3,26 @@ from pylox.token import Token
 from pylox.error import error
 
 
+keywords = {
+    "and": TokenType.AND,
+    "class": TokenType.CLASS,
+    "else": TokenType.ELSE,
+    "false": TokenType.FALSE,
+    "for": TokenType.FOR,
+    "fun": TokenType.FUN,
+    "if": TokenType.IF,
+    "nil": TokenType.NIL,
+    "or": TokenType.OR,
+    "print": TokenType.PRINT,
+    "return": TokenType.RETURN,
+    "super": TokenType.SUPER,
+    "this": TokenType.THIS,
+    "true": TokenType.TRUE,
+    "var": TokenType.VAR,
+    "while": TokenType.WHILE,
+}
+
+
 class Scanner:
     def __init__(self, source: str):
         self.source = source
@@ -67,11 +87,59 @@ class Scanner:
                     self.advance()
             else:
                 self.add_token(TokenType.SLASH)
-        # newlines
+        # newlines and whitespace
+        elif c.isspace():
+            pass
         elif c == "\n":
             self.line += 1
+        # string literals
+        elif c == '"':
+            self.string()
         else:
-            error(self.line, "Unexpected character.")
+            if self.is_digit(c):
+                self.number()
+            elif self.is_alpha(c):
+                # identifiers and keywords
+                self.identifier()
+            else:
+                error(self.line, "Unexpected character.")
+
+    def string(self) -> None:
+        while self.peek() != '"' and not self.is_at_end:
+            if self.peek() == "\n":
+                # allows for multi-line strings
+                self.line += 1
+            self.advance()
+
+        if self.is_at_end:
+            error(self.line, "Unterminated string.")
+            return
+
+        # closing "
+        self.advance()
+
+        value: str = self.source[self.start + 1: self.current - 1]
+        self.add_token(TokenType.STRING, value)
+
+    def number(self) -> None:
+        while self.is_digit(self.peek()):
+            self.advance()
+
+        if self.peek() == "." and self.is_digit(self.peek_next()):
+            self.advance()
+            while self.is_digit(self.peek()):
+                self.advance()
+
+        value: str = self.source[self.start: self.current]
+        self.add_token(TokenType.NUMBER, float(value))
+
+    def identifier(self) -> None:
+        while self.is_alphanumeric(self.peek()):
+            self.advance()
+        
+        text: str = self.source[self.start: self.current]
+        type: TokenType = keywords.get(text, TokenType.IDENTIFIER)
+        self.add_token(type)
 
     def match(self, expected: str) -> bool:
         if self.is_at_end:
@@ -86,6 +154,20 @@ class Scanner:
         if self.is_at_end:
             return "\0"
         return self.source[self.current]
+
+    def peek_next(self) -> str:
+        if self.current + 1 >= len(self.source):
+            return "\0"
+        return self.source[self.current + 1]
+
+    def is_digit(self, c: str) -> bool:
+        return c.isnumeric()
+
+    def is_alpha(self, c: str) -> bool:
+        return c.isalpha()
+
+    def is_alphanumeric(self, c: str) -> bool:
+        return self.is_digit(c) or self.is_alpha(c)
     
     @property
     def is_at_end(self) -> bool:

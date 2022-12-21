@@ -3,6 +3,9 @@ import sys
 import argparse
 
 
+had_error: bool = False
+
+
 def main() -> None:
     """
     Main entrypoint for pylox interpreter.
@@ -39,11 +42,16 @@ def run_file(path: str) -> None:
         script = f.read()
     run(script)
 
+    if had_error:
+        sys.exit(65)
+
 
 def run_prompt() -> None:
     """
     Open interactive REPL.
     """
+
+    global had_error
 
     while True:
         try:
@@ -52,6 +60,7 @@ def run_prompt() -> None:
             if line == "":
                 continue
             run(line)
+            had_error = False
         except EOFError:
             break
 
@@ -64,6 +73,16 @@ def run(script: str) -> None:
     for token in tokens:
         print(token)
 
+
+# basic error handlers
+def error(line: int, message: str) -> None:
+    report(line, "", message)
+
+
+def report(line: int, where: str, message: str) -> None:
+    global had_error # ugh, globals!
+    print(f"[line {line}] Error {where}: {message}", file=sys.stderr)
+    had_error = True
 
 
 if __name__ == "__main__":

@@ -1,0 +1,105 @@
+from pylox.expr import *
+from pylox.error import LoxRuntimeError
+from pylox.token_type import TokenType
+
+
+class Interpreter(ExprVisitor):
+    def interpret(self, expr: Expr) -> None:
+        try:
+            value: object = self._evaluate(expr)
+            print(self._stringify(value))
+        except RuntimeError as e:
+            pass
+
+    def visit_literal_expr(self, expr: Literal) -> object:
+        return expr.value
+
+    def visit_grouping_expr(self, expr: Grouping) -> object:
+        return self._evaluate(expr.expr)
+
+    def visit_unary_expr(self, expr: Unary) -> object:
+        right: object = self._evaluate(expr.right)
+
+        if expr.operator.type == TokenType.MINUS:
+            return -float(right)
+        elif expr.operator.type == TokenType.BANG:
+            return not self._is_truthy(right)
+        
+        # unreachable!
+        return None
+
+    def visit_binary_expr(self, expr: Binary) -> object:
+        left: object = self._evaluate(expr.left)
+        right: object = self._evaluate(expr.right)
+
+        if expr.operator.type == TokenType.MINUS:
+            self._check_number_operand(expr.operator, right)
+            return float(left) - float(right)
+        elif expr.operator.type == TokenType.PLUS:
+            # for numbers, this is addition
+            if isinstance(left, float) and isinstance(right, float):
+                return float(left) + float(right)
+            # for strings, concatenate
+            if isinstance(left, str) and isinstance(right, str):
+                return left + right
+            raise LoxRuntimeError(expr.operator, "Operands must be two numbers or two strings.")
+        elif expr.operator.type == TokenType.SLASH:
+            self._check_number_operands(expr.operator, left, right)
+            return float(left) / float(right)
+        elif expr.operator.type == TokenType.STAR:
+            self._check_number_operands(expr.operator, left, right)
+            return float(left) * float(right)
+        elif expr.operator.type == TokenType.GREATER:
+            self._check_number_operands(expr.operator, left, right)
+            return float(left) > float(right)
+        elif expr.operator.type == TokenType.GREATER_EQUAL:
+            self._check_number_operands(expr.operator, left, right)
+            return float(left) >= float(right)
+        elif expr.operator.type == TokenType.LESS:
+            self._check_number_operands(expr.operator, left, right)
+            return float(left) < float(right)
+        elif expr.operator.type == TokenType.LESS_EQUAL:
+            self._check_number_operands(expr.operator, left, right)
+            return float(left) <= float(right)
+        elif expr.operator.type == TokenType.BANG_EQUAL:
+            return not self._is_equal(left, right)
+        elif expr.operator.type == TokenType.EQUAL_EQUAL:
+            return self._is_equal(left, right)
+
+        # unreachable!
+        return None
+
+    def _evaluate(self, expr: Expr) -> object:
+        # self-reflection
+        return expr.accept(self)
+
+    def _is_truthy(self, obj: object) -> bool:
+        # ruby semantics: false and nil are falsey, everything else is truthy!
+        if obj is None:
+            return False
+        if isinstance(obj, bool):
+            return obj
+        return True
+
+    def _is_equal(self, x: object, y: object) -> bool:
+        return x == y
+
+    def _stringify(self, value: object) -> str:
+        if value is None:
+            return "nil"
+        if isinstance(value, float):
+            text: str = str(value)
+            if text.endswith(".0"):
+                text = str(int(float(text)))
+            return text
+        return str(value)
+        
+    def _check_number_operand(self, operator: Token, operand: object) -> None:
+        if isinstance(operand, float):
+            return
+        raise LoxRuntimeError(operator, "Operand must be a number.")
+
+    def _check_number_operands(self, operator: Token, left: object, right: object) -> None:
+        if isinstance(left, float) and isinstance(right, float):
+            return
+        raise LoxRuntimeError(operator, "Operands must be numbers.")

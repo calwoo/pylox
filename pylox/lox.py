@@ -4,6 +4,7 @@ import argparse
 
 from pylox.scanner import Scanner
 from pylox.parser import Parser
+from pylox.interpreter import Interpreter
 from pylox.error import *
 
 
@@ -46,6 +47,9 @@ def run_file(path: str) -> None:
     if had_error:
         sys.exit(65)
 
+    if had_runtime_error:
+        sys.exit(70)
+
 
 def run_prompt() -> None:
     """
@@ -75,14 +79,8 @@ def run(script: str) -> None:
     parser = Parser(tokens)
     expression = parser.parse()
 
-    print(expression)
-
-    if had_error:
-        return
-
-    # for now, just print tokens
-    for token in tokens:
-        print(token)
+    interpreter = Interpreter()
+    interpreter.interpret(expression)
 
 
 if __name__ == "__main__":

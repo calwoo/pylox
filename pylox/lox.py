@@ -3,6 +3,7 @@ import sys
 import argparse
 
 from pylox.scanner import Scanner
+from pylox.parser import Parser
 from pylox.error import *
 
 
@@ -66,8 +67,18 @@ def run_prompt() -> None:
 
 
 def run(script: str) -> None:
+    global had_error
+
     scanner = Scanner(script)
     tokens = scanner.scan_tokens()
+
+    parser = Parser(tokens)
+    expression = parser.parse()
+
+    print(expression)
+
+    if had_error:
+        return
 
     # for now, just print tokens
     for token in tokens:

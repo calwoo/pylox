@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from pylox.token import Token
 
 
+# visitors
 class ExprVisitor(ABC):
     @abstractmethod
     def visit_literal_expr(self, expr):
@@ -20,6 +21,17 @@ class ExprVisitor(ABC):
         pass
 
 
+class StmtVisitor(ABC):
+    @abstractmethod
+    def visit_expression_stmt(self, stmt):
+        pass
+
+    @abstractmethod
+    def visit_print_stmt(self, stmt):
+        pass
+
+
+# expressions
 class Expr(ABC):
     @abstractmethod
     def accept(self, visitor: ExprVisitor):
@@ -68,3 +80,27 @@ class Binary(Expr):
 
     def accept(self, visitor: ExprVisitor):
         return visitor.visit_binary_expr(self)
+
+
+# statements
+class Stmt(ABC):
+    @abstractmethod
+    def accept(self, visitor: StmtVisitor):
+        pass
+
+
+class Expression(Stmt):
+    def __init__(self, expr: Expr):
+        self.expression = expr
+
+    def accept(self, visitor: StmtVisitor):
+        return visitor.visit_expression_stmt(self)
+
+    
+class Print(Stmt):
+    def __init__(self, expr: Expr):
+        self.expression = expr
+
+    def accept(self, visitor: StmtVisitor):
+        return visitor.visit_print_stmt(self)
+    

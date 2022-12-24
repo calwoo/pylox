@@ -3,12 +3,16 @@ from pylox.environment import Environment
 from pylox.callable import LoxCallable
 from pylox.error import LoxRuntimeError, report_runtime_error
 from pylox.token_type import TokenType
+from pylox.native import Clock
 
 
 class Interpreter(ExprVisitor, StmtVisitor):
     environment: Environment = Environment()
 
     def interpret(self, statements: list[Stmt]) -> None:
+        # add in natives
+        environment.globals.define("clock", Clock())
+
         try:
             for statement in statements:
                 self._execute(statement)

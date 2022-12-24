@@ -23,6 +23,10 @@ class Environment:
     def n_blocks(self):
         return self.innermost + 1
 
+    @property
+    def globals(self):
+        return self.blocks[0]
+
     def define(self, name: str, value: object):
         inner_env = self.blocks[self.innermost]
         inner_env[name] = value

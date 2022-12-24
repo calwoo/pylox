@@ -9,6 +9,7 @@ class Interpreter(ExprVisitor, StmtVisitor):
 
     def interpret(self, statements: list[Stmt]) -> None:
         try:
+            print(statements)
             for statement in statements:
                 self._execute(statement)
         except RuntimeError as e:
@@ -80,14 +81,17 @@ class Interpreter(ExprVisitor, StmtVisitor):
         # unreachable!
         return None
 
-    def visit_expression_stmt(self, stmt: Stmt) -> None:
+    def visit_block_stmt(self, stmt: Block) -> None:
+        self._execute_block(stmt.statements)
+
+    def visit_expression_stmt(self, stmt: Expression) -> None:
         self._evaluate(stmt.expression)
 
-    def visit_print_stmt(self, stmt: Stmt) -> None:
+    def visit_print_stmt(self, stmt: Print) -> None:
         value: object = self._evaluate(stmt.expression)
         print(self._stringify(value))
 
-    def visit_var_stmt(self, stmt: Stmt) -> None:
+    def visit_var_stmt(self, stmt: Var) -> None:
         value: object = None
         if not stmt.initializer is None:
             value = self._evaluate(stmt.initializer)
@@ -96,6 +100,15 @@ class Interpreter(ExprVisitor, StmtVisitor):
 
     def _execute(self, stmt: Stmt) -> None:
         stmt.accept(self)
+
+    def _execute_block(self, statements: list[Stmt]):
+        print(self.environment.blocks[self.environment.innermost])
+        self.environment.in_block()
+        try:
+            for statement in statements:
+                self._execute(statement)
+        finally:
+            self.environment.out_block()
 
     def _evaluate(self, expr: Expr) -> object:
         # self-reflection

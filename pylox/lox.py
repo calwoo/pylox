@@ -76,8 +76,8 @@ def run(script: str) -> None:
     scanner = Scanner(script)
     tokens = scanner.scan_tokens()
 
-    for token in tokens:
-        print(token)
+    # for token in tokens:
+    #     print(token)
 
     parser = Parser(tokens)
     statements = parser.parse()

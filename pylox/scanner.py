@@ -88,9 +88,9 @@ class Scanner:
             else:
                 self.add_token(TokenType.SLASH)
         # newlines and whitespace
-        elif c.isspace():
+        elif c == ' ':
             pass
-        elif c == "\n":
+        elif c == '\n':
             self.line += 1
         # string literals
         elif c == '"':

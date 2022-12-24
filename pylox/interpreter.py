@@ -17,6 +17,17 @@ class Interpreter(ExprVisitor, StmtVisitor):
     def visit_literal_expr(self, expr: Literal) -> object:
         return expr.value
 
+    def visit_logical_expr(self, expr: Logical) -> object:
+        left: object = self._evaluate(expr.left)
+        
+        # short circuit if possible
+        if self._is_truthy(left) and (expr.operator.type == TokenType.OR):
+            return left
+        elif (not self._is_truthy(left)) and (expr.operator.type == TokenType.AND):
+            return False
+        else:
+            return self._evaluate(expr.right)
+
     def visit_grouping_expr(self, expr: Grouping) -> object:
         return self._evaluate(expr.expr)
 
@@ -82,6 +93,16 @@ class Interpreter(ExprVisitor, StmtVisitor):
 
     def visit_block_stmt(self, stmt: Block) -> None:
         self._execute_block(stmt.statements)
+
+    def visit_if_stmt(self, stmt: If) -> None:
+        if self._is_truthy(self._evaluate(stmt.condition)):
+            self._execute(stmt.then_branch)
+        elif stmt.else_branch is not None:
+            self._execute(stmt.else_branch)
+
+    def visit_while_stmt(self, stmt: While) -> None:
+        while self._is_truthy(self._evaluate(stmt.condition)):
+            self._execute(stmt.loop_body)
 
     def visit_expression_stmt(self, stmt: Expression) -> None:
         self._evaluate(stmt.expression)

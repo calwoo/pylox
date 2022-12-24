@@ -76,11 +76,14 @@ def run(script: str) -> None:
     scanner = Scanner(script)
     tokens = scanner.scan_tokens()
 
+    for token in tokens:
+        print(token)
+
     parser = Parser(tokens)
-    expression = parser.parse()
+    statements = parser.parse()
 
     interpreter = Interpreter()
-    interpreter.interpret(expression)
+    interpreter.interpret(statements)
 
 
 if __name__ == "__main__":

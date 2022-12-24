@@ -15,11 +15,27 @@ class Parser:
         self.tokens = tokens
         self.current: int = 0
 
-    def parse(self) -> Optional[Expr]:
-        try:
-            return self.expression()
-        except Exception:
-            return None
+    def parse(self) -> list[Stmt]:
+        statements: list[Stmt] = []
+        while not self._is_at_end:
+            statements.append(self.statement())
+
+        return statements
+
+    def statement(self) -> Stmt:
+        if self._match(TokenType.PRINT):
+            return self.print_stmt()
+        return self.expr_stmt()
+
+    def print_stmt(self) -> Stmt:
+        value: Expr = self.expression()
+        self._consume(TokenType.SEMICOLON, "Expect ';' after value.")
+        return Print(value)
+
+    def expr_stmt(self) -> Stmt:
+        expr: Expr = self.expression()
+        self._consume(TokenType.SEMICOLON, "Expect ';' after expression.")
+        return Expression(expr)
 
     def expression(self) -> Expr:
         return self.equality()

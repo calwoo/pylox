@@ -1,15 +1,15 @@
 from pylox.expr import *
-from pylox.error import LoxRuntimeError
+from pylox.error import LoxRuntimeError, report_runtime_error
 from pylox.token_type import TokenType
 
 
-class Interpreter(ExprVisitor):
-    def interpret(self, expr: Expr) -> None:
+class Interpreter(ExprVisitor, StmtVisitor):
+    def interpret(self, statements: list[Stmt]) -> None:
         try:
-            value: object = self._evaluate(expr)
-            print(self._stringify(value))
+            for statement in statements:
+                self._execute(statement)
         except RuntimeError as e:
-            pass
+            report_runtime_error(e)
 
     def visit_literal_expr(self, expr: Literal) -> object:
         return expr.value
@@ -68,6 +68,16 @@ class Interpreter(ExprVisitor):
 
         # unreachable!
         return None
+
+    def visit_expression_stmt(self, stmt: Stmt) -> None:
+        self._evaluate(stmt.expression)
+
+    def visit_print_stmt(self, stmt: Stmt) -> None:
+        value: object = self._evaluate(stmt.expression)
+        print(self._stringify(value))
+
+    def _execute(self, stmt: Stmt) -> None:
+        stmt.accept(self)
 
     def _evaluate(self, expr: Expr) -> object:
         # self-reflection

@@ -1,9 +1,12 @@
 from pylox.expr import *
+from pylox.environment import Environment
 from pylox.error import LoxRuntimeError, report_runtime_error
 from pylox.token_type import TokenType
 
 
 class Interpreter(ExprVisitor, StmtVisitor):
+    environment: Environment = Environment()
+
     def interpret(self, statements: list[Stmt]) -> None:
         try:
             for statement in statements:
@@ -27,6 +30,9 @@ class Interpreter(ExprVisitor, StmtVisitor):
         
         # unreachable!
         return None
+
+    def visit_variable_expr(self, expr: Var) -> object:
+        return self.environment.get(expr.name)
 
     def visit_binary_expr(self, expr: Binary) -> object:
         left: object = self._evaluate(expr.left)
@@ -75,6 +81,13 @@ class Interpreter(ExprVisitor, StmtVisitor):
     def visit_print_stmt(self, stmt: Stmt) -> None:
         value: object = self._evaluate(stmt.expression)
         print(self._stringify(value))
+
+    def visit_var_stmt(self, stmt: Stmt) -> None:
+        value: object = None
+        if not stmt.initializer is None:
+            value = self._evaluate(stmt.initializer)
+        
+        self.environment.define(stmt.name.lexeme, value)
 
     def _execute(self, stmt: Stmt) -> None:
         stmt.accept(self)

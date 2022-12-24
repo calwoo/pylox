@@ -20,6 +20,10 @@ class ExprVisitor(ABC):
     def visit_binary_expr(self, expr):
         pass
 
+    @abstractmethod
+    def visit_variable_expr(self, expr):
+        pass
+
 
 class StmtVisitor(ABC):
     @abstractmethod
@@ -28,6 +32,10 @@ class StmtVisitor(ABC):
 
     @abstractmethod
     def visit_print_stmt(self, stmt):
+        pass
+
+    @abstractmethod
+    def visit_var_stmt(self, stmt):
         pass
 
 

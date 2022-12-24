@@ -34,6 +34,11 @@ class Interpreter(ExprVisitor, StmtVisitor):
     def visit_variable_expr(self, expr: Var) -> object:
         return self.environment.get(expr.name)
 
+    def visit_assign_expr(self, expr: Assign) -> object:
+        value: object = self._evaluate(expr.value)
+        self.environment.assign(expr.name, value)
+        return value
+
     def visit_binary_expr(self, expr: Binary) -> object:
         left: object = self._evaluate(expr.left)
         right: object = self._evaluate(expr.right)

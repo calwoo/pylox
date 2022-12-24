@@ -1,5 +1,6 @@
 from pylox.expr import *
 from pylox.environment import Environment
+from pylox.callable import LoxCallable
 from pylox.error import LoxRuntimeError, report_runtime_error
 from pylox.token_type import TokenType
 
@@ -90,6 +91,21 @@ class Interpreter(ExprVisitor, StmtVisitor):
 
         # unreachable!
         return None
+
+    def visit_call_expr(self, expr: Call) -> object:
+        callee = self._evaluate(expr.callee)
+        arguments: list[object] = []
+        for argument in expr.arguments:
+            arguments.append(self._evaluate(argument))
+
+        if not isinstance(callee, LoxCallable):
+            raise LoxRuntimeError(expr.paren, "Can only call functions and classes.")
+
+        if len(arguments) != callee.arity():
+            raise LoxRuntimeError(expr.paren, f"Expected {callee.arity()} arguments but got {len(arguments)}.")
+
+        # TODO: finish this
+        pass
 
     def visit_block_stmt(self, stmt: Block) -> None:
         self._execute_block(stmt.statements)

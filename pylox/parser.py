@@ -221,8 +221,34 @@ class Parser:
             right: Expr = self.unary()
             expr = Unary(operator, right)
         else:
-            expr = self.primary()
+            expr = self.call()
         return expr
+
+    def call(self) -> Expr:
+        callee_expr: Expr = self.primary()
+
+        while True:
+            if self._match(TokenType.LEFT_PAREN):
+                callee_expr = self.finish_call(callee_expr)
+            else:
+                break
+
+        return callee_expr
+
+
+    def finish_call(self, callee: Expr) -> Expr:
+        arguments: list[Expr] = []
+        if not self._check(TokenType.RIGHT_PAREN):
+            while True:
+                if len(arguments) >= 255:
+                    self._error(self._peek(), "Can't have more than 255 arguments.")
+                arguments.append(self.expression())
+                if not self._match(TokenType.COMMA):
+                    break
+
+        paren: Token = self._consume(TokenType.RIGHT_PAREN, "Expect ')' after arguments.")
+        return Call(callee, paren, arguments)
+
 
     def primary(self) -> Expr:
         if self._match(TokenType.NUMBER, TokenType.STRING):
@@ -254,7 +280,7 @@ class Parser:
             return False
         return self._peek().type == type
 
-    def _advance(self) -> None:
+    def _advance(self) -> Token:
         if not self._is_at_end:
             self.current += 1
         return self._previous()
@@ -269,7 +295,7 @@ class Parser:
     def _previous(self) -> Token:
         return self.tokens[self.current - 1]
 
-    def _consume(self, type: TokenType, error_msg: str) -> None:
+    def _consume(self, type: TokenType, error_msg: str) -> Token:
         if self._check(type):
             return self._advance()
         raise self._error(self._peek(), error_msg)

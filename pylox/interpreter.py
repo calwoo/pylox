@@ -9,7 +9,6 @@ class Interpreter(ExprVisitor, StmtVisitor):
 
     def interpret(self, statements: list[Stmt]) -> None:
         try:
-            print(statements)
             for statement in statements:
                 self._execute(statement)
         except RuntimeError as e:
@@ -102,7 +101,6 @@ class Interpreter(ExprVisitor, StmtVisitor):
         stmt.accept(self)
 
     def _execute_block(self, statements: list[Stmt]):
-        print(self.environment.blocks[self.environment.innermost])
         self.environment.in_block()
         try:
             for statement in statements:

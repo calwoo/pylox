@@ -18,9 +18,18 @@ class Parser:
     def parse(self) -> list[Stmt]:
         statements: list[Stmt] = []
         while not self._is_at_end:
-            statements.append(self.statement())
+            statements.append(self.declaration())
 
         return statements
+
+    def declaration(self) -> Stmt:
+        try:
+            if self._match(TokenType.VAR):
+                return self.variable_declaration()
+            return self.statement()
+        except Exception:
+            self._synchronize()
+            return None
 
     def statement(self) -> Stmt:
         if self._match(TokenType.PRINT):
@@ -31,6 +40,16 @@ class Parser:
         value: Expr = self.expression()
         self._consume(TokenType.SEMICOLON, "Expect ';' after value.")
         return Print(value)
+
+    def variable_declaration(self) -> Stmt:
+        name: Token = self._consume(TokenType.IDENTIFIER, "Expect variable name.")
+        initializer: Expr = None
+        if self._match(TokenType.EQUAL):
+            # optional initializer in lox language
+            initializer = self.expression()
+
+        self._consume(TokenType.SEMICOLON, "Expect ';' after variable declaration")
+        return Var(name, initializer)
 
     def expr_stmt(self) -> Stmt:
         expr: Expr = self.expression()
@@ -98,6 +117,8 @@ class Parser:
             return Literal(False)
         elif self._match(TokenType.NIL):
             return Literal(None)
+        elif self._match(TokenType.IDENTIFIER):
+            return Variable(self._previous())
         elif self._match(TokenType.LEFT_PAREN):
             expr: Expr = self.expression()
             self._consume(TokenType.RIGHT_PAREN, "Expect ')' after expression.")

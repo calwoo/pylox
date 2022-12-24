@@ -49,10 +49,6 @@ class StmtVisitor(ABC):
         pass
 
     @abstractmethod
-    def visit_for_stmt(self, stmt):
-        pass
-
-    @abstractmethod
     def visit_while_stmt(self, stmt):
         pass
 

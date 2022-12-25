@@ -3,6 +3,7 @@ from pylox.environment import Environment
 from pylox.callable import LoxCallable
 from pylox.function import LoxFunction
 from pylox.error import LoxRuntimeError, report_runtime_error
+from pylox.return_exc import ReturnException
 from pylox.token_type import TokenType
 from pylox.native import Clock
 
@@ -134,6 +135,14 @@ class Interpreter(ExprVisitor, StmtVisitor):
     def visit_print_stmt(self, stmt: Print) -> None:
         value: object = self._evaluate(stmt.expression)
         print(self._stringify(value))
+
+    def visit_return_stmt(self, stmt: Return) -> None:
+        value: object = None
+        if stmt.value is not None:
+            value = self._evaluate(stmt.value)
+        
+        # throw an exception to escape the call stack
+        raise ReturnException(value)
 
     def visit_var_stmt(self, stmt: Var) -> None:
         value: object = None

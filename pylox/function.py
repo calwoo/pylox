@@ -1,5 +1,6 @@
 from pylox.callable import LoxCallable
 from pylox.environment import Environment
+from pylox.return_exc import ReturnException
 
 
 class LoxFunction(LoxCallable):
@@ -17,10 +18,17 @@ class LoxFunction(LoxCallable):
         # shadow interpreter environment
         original_env = interpreter.environment
         interpreter.environment = environment
-        interpreter._execute_block(self.declaration.body)
 
-        # restore original environment
-        interpreter.environment = original_env
+        value: object = None
+        try:
+            interpreter._execute_block(self.declaration.body)
+        except ReturnException as e:
+            value = e.value
+        finally:
+            # restore original environment
+            interpreter.environment = original_env
+        
+        return value
 
     def arity(self) -> int:
         return len(self.declaration.params)

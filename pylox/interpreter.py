@@ -1,6 +1,7 @@
 from pylox.expr import *
 from pylox.environment import Environment
 from pylox.callable import LoxCallable
+from pylox.function import LoxFunction
 from pylox.error import LoxRuntimeError, report_runtime_error
 from pylox.token_type import TokenType
 from pylox.native import Clock
@@ -11,7 +12,7 @@ class Interpreter(ExprVisitor, StmtVisitor):
 
     def interpret(self, statements: list[Stmt]) -> None:
         # add in natives
-        environment.globals.define("clock", Clock())
+        self.environment.globals["clock"] = Clock()
 
         try:
             for statement in statements:
@@ -108,8 +109,7 @@ class Interpreter(ExprVisitor, StmtVisitor):
         if len(arguments) != callee.arity():
             raise LoxRuntimeError(expr.paren, f"Expected {callee.arity()} arguments but got {len(arguments)}.")
 
-        # TODO: finish this
-        pass
+        return callee.call(self, arguments)
 
     def visit_block_stmt(self, stmt: Block) -> None:
         self._execute_block(stmt.statements)
@@ -126,6 +126,10 @@ class Interpreter(ExprVisitor, StmtVisitor):
 
     def visit_expression_stmt(self, stmt: Expression) -> None:
         self._evaluate(stmt.expression)
+
+    def visit_function_stmt(self, stmt: Function) -> None:
+        function: LoxFunction = LoxFunction(stmt)
+        self.environment.define(stmt.name.lexeme, function)
 
     def visit_print_stmt(self, stmt: Print) -> None:
         value: object = self._evaluate(stmt.expression)

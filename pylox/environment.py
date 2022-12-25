@@ -7,8 +7,13 @@ class Environment:
     Variable binding environment. Implements lexical scoping through enclosing blocks.
     """
 
-    def __init__(self):
-        self.blocks: list[dict[str, object]] = [{}]
+    def __init__(self, global_env=None):
+        self.blocks: list[dict[str, object]] = []
+        if global_env is None:
+            self.blocks.append({})
+        else:
+            self.blocks.append(global_env)
+
         self.innermost = 0
 
     def in_block(self):

@@ -26,6 +26,8 @@ class Parser:
         try:
             if self._match(TokenType.VAR):
                 return self.variable_declaration()
+            if self._match(TokenType.FUN):
+                return self.function("function")
             return self.statement()
         except Exception:
             self._synchronize()
@@ -51,6 +53,25 @@ class Parser:
 
         self._consume(TokenType.RIGHT_BRACE, "Expect '}' after block.")
         return statements
+
+    def function(self, kind: str) -> Stmt:
+        name: Token = self._consume(TokenType.IDENTIFIER, f"Expect {kind} name.")
+        self._consume(TokenType.LEFT_PAREN, f"Expect '(' after {kind} name.")
+        parameters: list[Token] = []
+        if not self._check(TokenType.RIGHT_PAREN):
+            while True:
+                if len(parameters) >= 255:
+                    self._error(self._peek(), "Can't have more than 255 arguments.")
+                
+                parameters.append(self._consume(TokenType.IDENTIFIER, "Expect parameter name."))
+                if not self._match(TokenType.COMMA):
+                    break
+
+        self._consume(TokenType.RIGHT_PAREN, "Expect ')' after parameters.")
+
+        self._consume(TokenType.LEFT_BRACE, "Expect '{' before " + kind + " body.")
+        body: list[Stmt] = self.block()
+        return Function(name, parameters, body)
 
     def if_stmt(self) -> Stmt:
         self._consume(TokenType.LEFT_PAREN, "Expect '(' after 'if'.")
@@ -234,7 +255,6 @@ class Parser:
                 break
 
         return callee_expr
-
 
     def finish_call(self, callee: Expr) -> Expr:
         arguments: list[Expr] = []

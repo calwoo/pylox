@@ -4,20 +4,18 @@ from pylox.return_exc import ReturnException
 
 
 class LoxFunction(LoxCallable):
-    def __init__(self, declaration):
+    def __init__(self, declaration, closure: Environment):
         self.declaration = declaration
+        self.closure = closure
 
     def call(self, interpreter, arguments: list[object]) -> object:
-        global_env = interpreter.environment.globals
-        environment: Environment = Environment(global_env=global_env)
-
-        environment.in_block()
+        self.closure.in_block()
         for arg, val in zip(self.declaration.params, arguments):
-            environment.define(arg.lexeme, val)
+            self.closure.define(arg.lexeme, val)
 
         # shadow interpreter environment
         original_env = interpreter.environment
-        interpreter.environment = environment
+        interpreter.environment = self.closure
 
         value: object = None
         try:
@@ -27,7 +25,7 @@ class LoxFunction(LoxCallable):
         finally:
             # restore original environment
             interpreter.environment = original_env
-        
+
         return value
 
     def arity(self) -> int:

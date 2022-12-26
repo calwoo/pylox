@@ -129,7 +129,7 @@ class Interpreter(ExprVisitor, StmtVisitor):
         self._evaluate(stmt.expression)
 
     def visit_function_stmt(self, stmt: Function) -> None:
-        function: LoxFunction = LoxFunction(stmt)
+        function: LoxFunction = LoxFunction(stmt, self.environment)
         self.environment.define(stmt.name.lexeme, function)
 
     def visit_print_stmt(self, stmt: Print) -> None:

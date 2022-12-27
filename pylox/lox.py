@@ -5,6 +5,7 @@ import argparse
 from pylox.scanner import Scanner
 from pylox.parser import Parser
 from pylox.interpreter import Interpreter
+from pylox.resolver import Resolver
 from pylox.error import *
 
 
@@ -76,13 +77,13 @@ def run(script: str) -> None:
     scanner = Scanner(script)
     tokens = scanner.scan_tokens()
 
-    # for token in tokens:
-    #     print(token)
-
     parser = Parser(tokens)
     statements = parser.parse()
-
     interpreter = Interpreter()
+
+    resolver = Resolver(interpreter)
+    resolver.resolve(statements)
+
     interpreter.interpret(statements)
 
 

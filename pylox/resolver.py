@@ -46,7 +46,7 @@ class Resolver(ExprVisitor, StmtVisitor):
 
     def visit_while_stmt(self, stmt: While) -> None:
         self._resolve(stmt.condition)
-        self._resolve(stmt.body)
+        self._resolve(stmt.loop_body)
 
     def visit_assign_expr(self, expr: Assign) -> None:
         self._resolve(expr.value)
@@ -70,18 +70,25 @@ class Resolver(ExprVisitor, StmtVisitor):
     def visit_unary_expr(self, expr: Unary):
         self._resolve(expr.right)
 
+    def visit_logical_expr(self, expr: Logical):
+        self._resolve(expr.left)
+        self._resolve(expr.right)
+
     def visit_variable_expr(self, expr: Variable) -> None:
-        if (len(self.scopes) == 0) and not self.scopes[-1].get(expr.name.lexeme):
+        if (len(self.scopes) != 0) and not self.scopes[-1].get(expr.name.lexeme):
             self._error(expr.name, "Can't read local variable in its own initializer.")
 
         self._resolve_local(expr, expr.name)
+
+    def resolve(self, statements: list[Stmt]) -> None:
+        self._resolve(statements)
 
     def _resolve(self, statements: Union[Expr, Stmt, list[Stmt]]) -> None:
         if isinstance(statements, list):
             for statement in statements:
                 self._resolve(statement)
-        
-        statements.accept(self)
+        else:
+            statements.accept(self)
 
     def _resolve_function(self, function: Function) -> None:
         self._begin_scope()

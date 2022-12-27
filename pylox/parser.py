@@ -45,7 +45,8 @@ class Parser:
         if self._match(TokenType.RETURN):
             return self.return_stmt()
         if self._match(TokenType.LEFT_BRACE):
-            return Block(self.block())
+            block = Block(self.block())
+            return block
         return self.expr_stmt()
 
     def block(self) -> list[Stmt]:
@@ -291,7 +292,8 @@ class Parser:
         elif self._match(TokenType.NIL):
             return Literal(None)
         elif self._match(TokenType.IDENTIFIER):
-            return Variable(self._previous())
+            variable = Variable(self._previous())
+            return variable
         elif self._match(TokenType.LEFT_PAREN):
             expr: Expr = self.expression()
             self._consume(TokenType.RIGHT_PAREN, "Expect ')' after expression.")

@@ -7,13 +7,8 @@ class Environment:
     Variable binding environment. Implements lexical scoping through enclosing blocks.
     """
 
-    def __init__(self, global_env=None):
-        self.blocks: list[dict[str, object]] = []
-        if global_env is None:
-            self.blocks.append({})
-        else:
-            self.blocks.append(global_env)
-
+    def __init__(self):
+        self.blocks: list[dict[str, object]] = [{}]
         self.innermost = 0
 
     def in_block(self):
@@ -45,6 +40,9 @@ class Environment:
             env_idx -= 1
         raise LoxRuntimeError(name, f"Undefined variable '{name.lexeme}.")
 
+    def get_at(self, distance: int, name: str) -> object:
+        return self.blocks[len(self.blocks) - 1 - distance].get(name)
+
     def assign(self, name: Token, value: object):
         # search envs for innermost definition of name, and update var in that env
         env_idx = self.innermost
@@ -55,3 +53,6 @@ class Environment:
                 return
             env_idx -= 1
         raise LoxRuntimeError(name, f"Undefined variable '{name.lexeme}'.")
+
+    def assign_at(self, distance: int, name: Token, value: object) -> None:
+        self.blocks[len(self.blocks) - 1 - distance][name.lexeme] = value

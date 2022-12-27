@@ -10,6 +10,7 @@ from pylox.native import Clock
 
 class Interpreter(ExprVisitor, StmtVisitor):
     environment: Environment = Environment()
+    locals_: dict[Expr, int] = {}
 
     def interpret(self, statements: list[Stmt]) -> None:
         # add in natives
@@ -20,6 +21,9 @@ class Interpreter(ExprVisitor, StmtVisitor):
                 self._execute(statement)
         except RuntimeError as e:
             report_runtime_error(e)
+
+    def resolve(self, expr: Expr, depth: int):
+        self.locals_[expr] = depth
 
     def visit_literal_expr(self, expr: Literal) -> object:
         return expr.value
@@ -49,12 +53,19 @@ class Interpreter(ExprVisitor, StmtVisitor):
         # unreachable!
         return None
 
-    def visit_variable_expr(self, expr: Var) -> object:
-        return self.environment.get(expr.name)
+    def visit_variable_expr(self, expr: Variable) -> object:
+        return self._lookup_variable(expr.name, expr)
 
     def visit_assign_expr(self, expr: Assign) -> object:
         value: object = self._evaluate(expr.value)
+        
+        # distance: int = self.locals_.get(expr)
+        # if distance is not None:
+        #     self.environment.assign_at(distance, expr.name, value)
+        # else:
+        #     self.environment.globals[expr.name.lexeme] = value
         self.environment.assign(expr.name, value)
+
         return value
 
     def visit_binary_expr(self, expr: Binary) -> object:
@@ -131,6 +142,8 @@ class Interpreter(ExprVisitor, StmtVisitor):
     def visit_function_stmt(self, stmt: Function) -> None:
         function: LoxFunction = LoxFunction(stmt, self.environment)
         self.environment.define(stmt.name.lexeme, function)
+        # slight-of-hand to avoid rewriting the environment class
+        function.closure.define(stmt.name.lexeme, function)
 
     def visit_print_stmt(self, stmt: Print) -> None:
         value: object = self._evaluate(stmt.expression)
@@ -154,17 +167,29 @@ class Interpreter(ExprVisitor, StmtVisitor):
     def _execute(self, stmt: Stmt) -> None:
         stmt.accept(self)
 
-    def _execute_block(self, statements: list[Stmt]):
-        self.environment.in_block()
+    def _execute_block(self, statements: list[Stmt], new_scope: bool = True):
+        if new_scope:
+            self.environment.in_block()
+
         try:
             for statement in statements:
                 self._execute(statement)
         finally:
-            self.environment.out_block()
+            if new_scope:
+                self.environment.out_block()
 
     def _evaluate(self, expr: Expr) -> object:
         # self-reflection
         return expr.accept(self)
+
+    def _lookup_variable(self, name: Token, expr: Expr) -> object:
+        # dist: int = self.locals_.get(expr)
+        # if dist is not None:
+        #     return self.environment.get_at(dist, name.lexeme)
+        # else:
+        #     print("what?", expr, self.locals_)
+        #     return self.environment.globals[name.lexeme]
+        return self.environment.get(name)
 
     def _is_truthy(self, obj: object) -> bool:
         # ruby semantics: false and nil are falsey, everything else is truthy!
